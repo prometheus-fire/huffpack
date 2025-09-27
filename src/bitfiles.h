@@ -32,6 +32,9 @@ typedef struct {
  */
 BitWriter* BitWriter_create(FILE* dest);
 
+/*
+ * WARNING: use this function BEFORE closing dest
+ */
 void BitWriter_free(BitWriter** bw);
 
 /*

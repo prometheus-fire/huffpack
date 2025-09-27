@@ -17,6 +17,12 @@ BitWriter* BitWriter_create(FILE* dest) {
 }
 
 void BitWriter_free(BitWriter** bw) {
+	if ((*bw)->curr_bit != 0) {
+		int res = fputc((*bw)->curr_char, (*bw)->dest);
+		if (res == EOF) {
+			perror("Error encountered when writing to bw->dest");
+		}
+	}
 	free(*bw);
 	*bw = NULL;
 }
