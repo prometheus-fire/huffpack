@@ -14,7 +14,7 @@
 /*
  * ByteFrequencies[char] ::= number of occurrences of char in a file.
  */
-typedef uint64_t ByteFrequencies[CHAR_MAX];
+typedef uint64_t ByteFrequencies[UCHAR_MAX+1];
 
 /*
  * This function returns an approximate distribution of

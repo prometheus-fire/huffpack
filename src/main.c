@@ -1,13 +1,27 @@
 
 #include <stdio.h>
 #include <stdlib.h>
-#include "byte_freq.h"
+#include "hufftree.h"
 
-/*
- * This program takes a file as argv[1] and displays the frequencies
- * of each one of its bytes.
- */
- 
+
+void visit(HuffTree* ht) {
+	int isleaf = 1;
+	if (ht->left) {
+		putchar('0');
+		isleaf = 0;
+		visit(ht->left);
+	} else { putchar('1'); }
+	if (ht->right) {
+		putchar('0');
+		isleaf = 0;
+		visit(ht->right);
+	} else { putchar('1'); }
+	if (isleaf == 1) {
+		putchar(ht->val);
+	}
+}
+
+
 int main(int argc, char *argv[]) {
 	if (argc != 2) {
 		puts("Filename expected as argument.\n");
@@ -18,16 +32,12 @@ int main(int argc, char *argv[]) {
 		perror("Could not open file.");
 		exit(1);
 	}
-	ByteFrequencies* bf = ByteFrequencies_from_file(f);
-	if (bf == NULL) {
-		exit(1);
-	}
-	for (unsigned int i=0; i<CHAR_MAX; i++) {
-		if ( (*bf)[i] != 0 ) {
-			printf("char : %c, frequency: %ld\n", (char)i, (*bf)[i]);
-		}
-	}
-	ByteFrequencies_free(&bf);
+	HuffTree *ht = HuffTree_create(f);
 	fclose(f);
+
+	visit(ht);
+	putchar('\n');
+
+	HuffTree_free(ht);
 	return 0;
 }

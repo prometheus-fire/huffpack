@@ -14,7 +14,6 @@ ByteFrequencies* ByteFrequencies_from_file(FILE* f) {
         free(result);
         return NULL;
     }
-	fseek(f, 0, SEEK_SET);
 	if (fseek(f, 0, SEEK_SET) != 0) {
         perror("fseek failed");
         free(result);
@@ -24,7 +23,7 @@ ByteFrequencies* ByteFrequencies_from_file(FILE* f) {
 		int ch;
 		while ((ch = fgetc(f)) != EOF) {
 			if ((*result)[ch]+1 == 0) {
-				for (size_t i=0; i<256; i++) {
+				for (size_t i=0; i<=UCHAR_MAX; i++) {
 					(*result)[i] = (*result)[i] >> 1;
 				}
 			}
