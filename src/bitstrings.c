@@ -9,7 +9,7 @@ int Bitstring_create(BitString *bs, const char *s)
         return 0;
     }
 
-    size_t bytelen = len / 8 + (len%8 == 0);
+    size_t bytelen = (len + CHAR_BIT-1) / 8;
     bs->data = calloc(bytelen, sizeof(unsigned char));
     if (bs->data == NULL) {
         perror("could not allocate enough memory for bitstring");
@@ -35,6 +35,8 @@ int Bitstring_create(BitString *bs, const char *s)
 
 void Bitstring_free(BitString *bs)
 {
+    if (bs == NULL) return;
     free(bs->data);
     bs->length = 0;
+    free(bs);
 }

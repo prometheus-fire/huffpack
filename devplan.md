@@ -29,18 +29,25 @@ and zip do).
 The compression of a file will generate a new file with the extension
 .hfp. The .hfp file will have the following structure:
 
-file.hpf ::= [Header | Compressed Bytes]
+file.hpf ::= [Header | lboffset | Compressed Bytes]
 
 [Compressed Bytes] ::= the raw compressed bit data from the original
 file
 
-[Header] ::= [lboffset | byte_frequencies]
-
 [lboffset] ::= a number wich represents at which bit of the final byte
 of compressed bytes the decompression process should be ended.
 
-[byte_frequencies] :: a list of byte frequencies starting from the least
-to the most frequent byte used in the original file.
+[Header] ::= [numbytes | level_order_bytes | shapebuffer]
+
+[numbytes] :: the number of distinct bytes used in file (represented
+by a single byte)
+
+[level_order_bytes] :: array of #numbytes bytes consisting of all the
+bytes used in the original file ordered by level order traversal of
+the huffman coding tree.
+
+[shapebuffer] :: a bitstring used to represent the shape of the 
+huffman coding's tree. its size is 2*numbytes-1 bits.
 
 
 ## 3. User interface
