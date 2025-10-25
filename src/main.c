@@ -32,7 +32,9 @@ int main(int argc, char *argv[]) {
 		perror("Could not open file.");
 		exit(1);
 	}
-	HuffTree *ht = HuffTree_create(f);
+	ByteFrequencies *bf = ByteFrequencies_from_file(f);
+	HuffTree *ht = HuffTree_create(bf);
+	ByteFrequencies_free(&bf);
 	fclose(f);
 
 	visit(ht);

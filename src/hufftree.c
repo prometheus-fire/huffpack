@@ -21,11 +21,9 @@ int compare(const void *a, const void *b) {
 	return 0;
 }
 
-HuffTree* HuffTree_create(FILE* f) {
-	// step 1: get byte frequencies.
-	ByteFrequencies *bf = ByteFrequencies_from_file(f);
+HuffTree* HuffTree_create(ByteFrequencies *bf) {
+	// step 1: get byte frequencies
 	if (bf == NULL) {
-		perror("could not allocate enought memory.");
 		return NULL;
 	}
 	
@@ -50,7 +48,6 @@ HuffTree* HuffTree_create(FILE* f) {
 				HuffTree *new_node = malloc(sizeof(HuffTree));
 				if (new_node == NULL) {
 					perror("could not allocate enough memory.");
-					ByteFrequencies_free(&bf);
 					for (size_t j=0; j<curr_el; j++) {
 						HuffTree_free(array[i].node);
 					}
@@ -67,8 +64,6 @@ HuffTree* HuffTree_create(FILE* f) {
 			}
 		}
 	}
-	// we can free byte frequencies as we dont need them anymore.
-	ByteFrequencies_free(&bf);
 	
 	// step 3: sort array in non decreasing order based on frequencies.
 	qsort((void *)array, array_size, sizeof(struct arr_el), compare);

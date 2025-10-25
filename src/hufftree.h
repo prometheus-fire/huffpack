@@ -14,7 +14,7 @@ typedef struct hftree {
 	unsigned char val;
 } HuffTree;
 
-HuffTree* HuffTree_create(FILE* f);
+HuffTree* HuffTree_create(ByteFrequencies *bf);
 
 void HuffTree_free(HuffTree* hf);
 
