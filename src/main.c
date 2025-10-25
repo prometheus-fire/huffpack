@@ -1,45 +1,34 @@
 
 #include <stdio.h>
 #include <stdlib.h>
-#include "hufftree.h"
+#include "bitstrings.h"
 
+int main() {
 
-void visit(HuffTree* ht) {
-	int isleaf = 1;
-	if (ht->left) {
-		putchar('0');
-		isleaf = 0;
-		visit(ht->left);
-	} else { putchar('1'); }
-	if (ht->right) {
-		putchar('0');
-		isleaf = 0;
-		visit(ht->right);
-	} else { putchar('1'); }
-	if (isleaf == 1) {
-		putchar(ht->val);
+	unsigned char test = 'A';
+	printf("test character : %c %d\n", test, test);
+	
+	char str[CHAR_BIT+1];
+	for (size_t i=0; i<CHAR_BIT; i++) {
+		unsigned char ti = 1 << i;
+		int curr_bit = (test & ti) >> i;
+		if (curr_bit == 1) {
+			str[i] = '1';
+		} else if (curr_bit == 0){
+			str[i] = '0';
+		} else {
+			exit(1);
+		}
 	}
-}
+	str[CHAR_BIT] = '\0';
 
+	printf("string for test character : %s\n", str);
 
-int main(int argc, char *argv[]) {
-	if (argc != 2) {
-		puts("Filename expected as argument.\n");
-		return 0;
-	}
-	FILE *f = fopen(argv[1], "rb");
-	if (f == NULL) {
-		perror("Could not open file.");
-		exit(1);
-	}
-	ByteFrequencies *bf = ByteFrequencies_from_file(f);
-	HuffTree *ht = HuffTree_create(bf);
-	ByteFrequencies_free(&bf);
-	fclose(f);
+	BitString result;
+	Bitstring_create(&result, str);
 
-	visit(ht);
-	putchar('\n');
+	printf("Result : %c\n", result.data[0]);
 
-	HuffTree_free(ht);
+	Bitstring_free(&result);
 	return 0;
 }
