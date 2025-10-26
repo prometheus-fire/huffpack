@@ -66,7 +66,6 @@ int gen_encodings(HuffTree *ht, BitString **encoding, char *curr_str, int depth)
     if (ht == NULL) return 1;
     if (ht->left==NULL && ht->right==NULL) {
         curr_str[depth] = '\0';
-        printf("%c - %s\n", ht->val, curr_str);
         encoding[ht->val] = malloc(sizeof(BitString));
         if (encoding[ht->val] == NULL) {
             perror("could not allocate enough memory for bitstring");
@@ -125,11 +124,13 @@ int filedata_compress(FILE* f, HuffTree *ht, FILE* outfile, int numbytes) {
     while ((ch=fgetc(f)) != EOF) {
         BitWriter_write(bw, encoding[ch]->data, encoding[ch]->length);
     }
-    
-    // save lboffset
-    fseek(outfile, lboffset_pos, SEEK_SET);
-    fputc(bw->curr_bit, outfile);
+    unsigned char curr_bit = bw->curr_bit;
     BitWriter_free(&bw);
+
+    // write lboffset
+    fseek(outfile, lboffset_pos, SEEK_SET);
+    fputc(curr_bit, outfile);
+    fseek(outfile, 0, SEEK_END);
 
     // free encoding data
     for (size_t i=0; i<UCHAR_MAX+1; i++) {
