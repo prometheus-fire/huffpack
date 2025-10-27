@@ -25,6 +25,11 @@ typedef struct {
 	unsigned char curr_char;
 } BitWriter;
 
+/*
+* BitReader is the equivalent of BitWriter but for reading from files.
+*/
+typedef BitWriter BitReader;
+
 
 /*
  * Returns a pointer to a new bitwriter. Returns NULL if some error
@@ -42,5 +47,24 @@ void BitWriter_free(BitWriter** bw);
  * Returns 0 if writing was successful, 1 if some error occurred.
  */
 int BitWriter_write(BitWriter* bw, void *data, unsigned int bitcount);
+
+/*
+	Returns a pointer to a new BitReader.
+	Returns NULL if some error occurred.
+*/
+BitReader* BitReader_create(FILE* src);
+
+/*
+	Frees a bitreader pointer and sets it to NULL
+*/
+void BitReader_free(BitReader** br);
+
+/*
+	Reads a bit from the current file location.
+	Returns 0 or 1 depending on the bit read if reading was successful,
+	EOF if file ended.
+*/
+int BitReader_read(BitReader* br);
+
 
 #endif

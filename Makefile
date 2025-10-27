@@ -6,7 +6,7 @@ BUILD_DIR = build
 
 # 1. Definisci ESPLICITAMENTE i NOMI BASE dei programmi che vuoi come eseguibili.
 # Questi nomi devono corrispondere ai tuoi file in src/ (es. src/main1.c, src/prog2.c).
-PROGRAMS = huffpack
+PROGRAMS = huffpack test
 
 # 2. Crea una lista degli eseguibili completi (es. main1 prog2)
 EXEC = $(PROGRAMS)

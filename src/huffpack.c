@@ -36,6 +36,7 @@ int main(int argc, char *argv[]) {
 			}
 			if (outdir_specified==1) {
 				puts("output directory specified more than once");
+				exit(1);
 			}
 			outdir_specified = 1;
 			outdir = argv[i];

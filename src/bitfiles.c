@@ -57,3 +57,40 @@ int BitWriter_write(BitWriter* bw, void *data, unsigned int bitcount) {
 	}
 	return 0;
 }
+
+BitReader *BitReader_create(FILE *src)
+{
+	if (src == NULL) return NULL;
+	BitReader *result = malloc(sizeof(*result));
+	if (result == NULL) {
+		perror("could not allocate enough memory.");
+		return NULL;
+	}
+	result->curr_bit = 0;
+	result->curr_char = 0;
+	result->dest = src;
+    return result;
+}
+
+void BitReader_free(BitReader **br)
+{
+	if (br != NULL && *br != NULL) {
+		free(*br);
+		*br = NULL;
+	}
+}
+
+int BitReader_read(BitReader *br)
+{
+	if (br->curr_bit == 0) {
+		int ch = fgetc(br->dest);
+		if (ch == EOF) {
+			return EOF;
+		}
+		br->curr_char = ch;
+	}
+
+	int b = (br->curr_char >> br->curr_bit) & 1;
+	br->curr_bit = (br->curr_bit+1) % CHAR_BIT;
+    return b;
+}
