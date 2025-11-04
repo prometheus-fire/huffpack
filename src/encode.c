@@ -1,11 +1,11 @@
 #include "encode.h"
 
-int hufftree_compress(HuffTree *hf, FILE *f, int numbytes) {
+int hufftree_compress(HuffTree *hf, FILE *f, unsigned short numbytes) {
 
     // position of the level order bytes
     long lob_pos = ftell(f);
     // position of the shape buffer
-    long sb_pos = lob_pos + numbytes;
+    long sb_pos = lob_pos + (long)numbytes;
 
     // queue structure for level order traversal of the tree
     struct qel {
@@ -89,7 +89,7 @@ int gen_encodings(HuffTree *ht, BitString **encoding, char *curr_str, int depth)
     return 0;
 }
 
-int filedata_compress(FILE* f, HuffTree *ht, FILE* outfile, int numbytes) {
+int filedata_compress(FILE* f, HuffTree *ht, FILE* outfile, unsigned short numbytes) {
 
     BitString **encoding = calloc(UCHAR_MAX+1, sizeof(BitString *));
     if (encoding == NULL) {
@@ -142,6 +142,16 @@ int filedata_compress(FILE* f, HuffTree *ht, FILE* outfile, int numbytes) {
 
 int compress(FILE *f, FILE *out_path)
 {
+    // check if f size is 0 (in that case do nothing) 
+    {
+        fseek(f, 0, SEEK_END);
+        long bytes = ftell(f);
+        fseek(f, 0, SEEK_SET);
+        if (bytes == 0) {
+            return 0;
+        }
+    }
+
     // STEP 1: get byte frequencies in f.
     ByteFrequencies *bf = ByteFrequencies_from_file(f);
     if (bf == NULL) {
@@ -150,7 +160,7 @@ int compress(FILE *f, FILE *out_path)
     }
 
     // number of distinct bytes in file. useful for later.
-    unsigned char numbytes = 0;
+    unsigned short numbytes = 0;
 
     for (size_t i=0; i<UCHAR_MAX+1; i++) {
         if ((*bf)[i]>0) numbytes++;
@@ -165,8 +175,8 @@ int compress(FILE *f, FILE *out_path)
     }
 
     // STEP 3: compress huffman tree and put it into file.
-    // 3.1: put numbytes into file
-    fputc(numbytes, out_path);
+    // 3.1: put numbytes-1 into file (numbytes >= 1 at this point)
+    fputc((unsigned char)(numbytes-1), out_path);
     // 3.2: put level order bytes and shape buffer into the file.
     hufftree_compress(ht, out_path, numbytes);
 

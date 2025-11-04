@@ -46,7 +46,7 @@ HuffTree *HuffTree_from_file(FILE *src) {
     }
 
     // numbytes, position of the level order bytes and shape buffer
-    int numbytes = fgetc(src);
+    int numbytes = fgetc(src) + 1;
     long lob_pos = 1;
     long sb_pos = 1 + numbytes;
 
@@ -133,6 +133,17 @@ HuffTree *HuffTree_from_file(FILE *src) {
 
 
 int decode(FILE *src, FILE *dest) {
+
+    // check if src size is 0 (in that case do nothing) 
+    {
+        fseek(src, 0, SEEK_END);
+        long bytes = ftell(src);
+        fseek(src, 0, SEEK_SET);
+        if (bytes == 0) {
+            return 0;
+        }
+    }
+
     // generate hufftree from src header
     HuffTree *hf = HuffTree_from_file(src);
     if (hf == NULL) {
@@ -157,10 +168,10 @@ int decode(FILE *src, FILE *dest) {
     HuffTree *curr = hf;
     #define ISLEAF  (curr->left==NULL && curr->right==NULL)
 
-    while (1) {
-        if (bytes_until_end==0 && br->curr_bit>=lboffset) {
-            break;
-        }
+    while (
+           (bytes_until_end>0) || 
+           (bytes_until_end==0 && br->curr_bit != lboffset)
+        ) {
         // check if curr node is leaf
         if (ISLEAF) {
             fputc(curr->val, dest);
@@ -168,7 +179,7 @@ int decode(FILE *src, FILE *dest) {
             continue;
         }
         // check if a new byte is going to be read by br
-        if (br->curr_bit==0 && bytes_until_end>0) {
+        if (br->curr_bit==0) {
             bytes_until_end--;
         } 
         int bit = BitReader_read(br);
@@ -186,6 +197,10 @@ int decode(FILE *src, FILE *dest) {
                 goto decoding_error;
                 break;
         }
+    }
+
+    if (ISLEAF) {
+        fputc(curr->val, dest);
     }
 
     #undef ISLEAF

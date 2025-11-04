@@ -59,15 +59,21 @@ int main(int argc, char *argv[]) {
 			perror("could not allocate enough memory");
 			exit(1);
 		}
+		char *orig_filename = argv[i];
 		strcpy(out_path, outdir);
-		strcat(out_path, argv[i]);
+		strcat(out_path, orig_filename);
 		strcat(out_path, ext);
 
 		FILE *w = fopen(out_path, "wb");
-		free(out_path);
+	
 		if (w == NULL) {
-			perror("could not open file");
-			exit(1);
+			fprintf(stderr, "WARNING: could not open file %s\n", out_path);
+			free(out_path);
+			continue;
+		}
+		else {
+			printf("Compressed %s into %s\n", argv[i], out_path);
+			free(out_path);
 		}
 
 		compress(r,w);
