@@ -1,0 +1,23 @@
+Huffunpack is a tool that is used to decompress .huff files
+generated from Huffpack.
+
+huffpack [-o dir] path1 path2 ...
+
+where pathi is path to file i to be compressed, and the optional
+parameter dir is the name of the output directory (./ by default).
+
+The flag -o can be specified multiple times in a commands, since
+it only affects filenames passed after the flag.
+
+ex: huffpack path1 -o dir path2
+>> ./path1.huff
+>> dir/path2.huff
+
+ex: huffpack -o dir1 path1 -o dir2 path2
+>> dir1/path1.huff
+>> dir2/path2.huff
+
+ex: huffpack path -o dir
+>> ./path.huff
+
+Compressed files will be named path1.huff, path2.huff, ...

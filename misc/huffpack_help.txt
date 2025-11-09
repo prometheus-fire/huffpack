@@ -1,9 +1,23 @@
 Huffpack is a tool that uses plain huffman coding to compress
-files. It can be used with the following signature
+files.
 
-huffpack [-o dir] path1 path2 ...
+huffunpack [-o dir] path1.huff path2.huff ...
 
-where pathi is path to file i to be compressed, and the optional
-parameter dir is the name of the output directory (. by default).
+where pathi is path to file i to be decompressed, and the optional
+parameter dir is the name of the output directory (./ by default).
 
-Compressed files will be named path1.huff, path2.huff, ...
+The flag -o can be specified multiple times in a commands, since
+it only affects filenames passed after the flag.
+
+ex: huffunpack path1.huff -o dir path2.huff
+>> ./path1
+>> dir/path2
+
+ex: huffunpack -o dir1 path1.huff -o dir2 path2.huff
+>> dir1/path1
+>> dir2/path2
+
+ex: huffunpack path.huff -o dir
+>> ./path
+
+Decompressed files will be named path1, path2 ...
