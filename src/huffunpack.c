@@ -2,25 +2,23 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include <cwalk.h> // Per la gestione dei percorsi
+#include <cwalk.h>
 
-#include "decode.h" // Per la funzione di decompressione
+#include "decode.h"
+
+#define EXT ".huff"
 
 int main(int argc, char *argv[]) {
 
-    // Buffer per la directory di output, normalizzato
-    char outdir_buf[FILENAME_MAX] = "./"; 
-    char *outdir = outdir_buf; 
-    int outdir_specified = 0;
-    const char ext[] = ".huff"; // Estensione che cerchiamo
+    // output directory, by default is .
+    char *outdir = ".";
 
-    // --- Gestione --help ---
+    // manage help option
     if (argc == 2 && strcmp(argv[1], "--help") == 0) {
-        // Assumiamo che esista un file di aiuto per huffunpack
         FILE *help = fopen("./misc/huffunpack_help.txt", "rb");
         if (help == NULL) {
             puts("missing help file");
-            return 1;
+            return -1;
         }
         int ch;
         while ((ch = fgetc(help)) != EOF) {
@@ -30,106 +28,85 @@ int main(int argc, char *argv[]) {
         return 0;
     }
 
-    // --- Loop sugli argomenti ---
     for (int i = 1; i < argc; i++) {
-
-        // --- Gestione -o ---
+        // if -o argument is passed, the next files taken as input
+        // will have the new directory specified as input
         if (strcmp(argv[i], "-o") == 0) {
             i++;
             if (i == argc) {
                 puts("dir name must be specified for optional parameter -o");
                 exit(1);
             }
-            if (outdir_specified == 1) {
-                puts("output directory specified more than once");
-                exit(1);
-            }
-            outdir_specified = 1;
-
-            // Copia e normalizza il percorso di output
-            strncpy(outdir_buf, argv[i], sizeof(outdir_buf) - 1);
-            outdir_buf[sizeof(outdir_buf) - 1] = '\0'; 
-            cwk_path_normalize(outdir_buf, outdir_buf, sizeof(outdir_buf));
-            
+            outdir = argv[i];
+            cwk_path_normalize(outdir, outdir, strlen(outdir)+1);
             continue;
         }
 
-        // --- Gestione File di Input ---
-
-        // 1. Controllo estensione del file di input
-        const char *input_ext;
-        size_t input_ext_len;
-        cwk_path_get_extension(argv[i], &input_ext, &input_ext_len);
-
-        if (input_ext == NULL || strcmp(input_ext, ext) != 0) {
-            fprintf(stderr, "ERRORE: Il file %s non ha estensione %s. Ignorato.\n", argv[i], ext);
-            continue; // Salta al prossimo file
+        // check if input file has EXT extension,
+        {
+            const char *input_ext;
+            size_t extlen;
+            bool found_ext = cwk_path_get_extension(argv[i], &input_ext, &extlen);
+            if (!found_ext || strcmp(input_ext, EXT) != 0) {
+                fprintf(stderr, "ERROR: %s file extension is not %s, ignored\n", argv[i], EXT);
+                continue;
+            }
         }
 
-        // 2. Apri il file di input
-        FILE *in = fopen(argv[i], "rb");
-        if (in == NULL) {
+        // open input file
+        FILE *r = fopen(argv[i], "rb");
+        if (r == NULL) {
             perror("could not open file");
             continue;
         }
 
-        // 3. Costruzione percorso di output (usando cwalk)
+        // get basename of input file
         const char *basename;
-        size_t basename_len;
-        char basename_nullterm[FILENAME_MAX];
-        char joined_path[FILENAME_MAX];
-        char final_out_path[FILENAME_MAX];
+        cwk_path_get_basename(argv[i], &basename, NULL);
 
-        // 3a. Estrai il basename (es. "file.huff")
-        cwk_path_get_basename(argv[i], &basename, &basename_len);
+        char *new_basename = malloc(strlen(basename)+1);
+        if (new_basename == NULL) {
+            perror("could not allocate enough memory for filename");
+            fclose(r);
+            exit(1);
+        }
+        strcpy(new_basename, basename);
 
-        // 3b. Copia e termina il basename
-        if (basename_len >= sizeof(basename_nullterm)) {
-            fprintf(stderr, "ERRORE: filename is too long %s\n", argv[i]);
-            fclose(in);
+        // remove .huff extension from basename
+        {
+            size_t extension_dot_pos = strlen(new_basename) - strlen(EXT);
+            new_basename[extension_dot_pos] = '\0';
+        }
+
+        // generate final out path
+        size_t final_out_path_size = (strlen(outdir)+strlen(new_basename)) * 2;
+        char *final_out_path = malloc(final_out_path_size);
+        if (final_out_path == NULL) {
+            perror("could not allocate enough memory for filename");
+            fclose(r);
+            free(new_basename);
+            exit(1);
+        }
+        cwk_path_join(outdir, new_basename, final_out_path, final_out_path_size);
+        free(new_basename);
+
+        // open the resulting file
+        FILE *w = fopen(final_out_path, "wb");
+
+        // decompress input file into output file
+        if (w == NULL) {
+            fprintf(stderr, "ERROR: could not create file %s\n", final_out_path);
+            free(final_out_path);
             continue;
-        }
-        strncpy(basename_nullterm, basename, basename_len);
-        basename_nullterm[basename_len] = '\0';
-
-        // 3c. Unisci outdir (es. "build/") e basename (es. "file.huff")
-        // Risultato: "build/file.huff"
-        cwk_path_join(outdir, basename_nullterm, joined_path, sizeof(joined_path));
-
-        // 3d. Cambia l'estensione da ".huff" a "" (niente)
-        // Risultato: "build/file"
-        cwk_path_change_extension(joined_path, "", final_out_path, sizeof(final_out_path));
-
-        char *last_ext = NULL;
-        char *curr = final_out_path;
-        while (*curr != '\0') {
-            if (*(curr) == '.') {
-                last_ext = curr;
-            }
-            curr++;
-        }
-        if (last_ext != NULL) {
-            *last_ext = '\0';
-        }
-
-        // 4. Apri il file di output
-        FILE *out = fopen(final_out_path, "wb");
-
-        if (out == NULL) {
-            fprintf(stderr, "ERRORE: could not create file %s\n", final_out_path);
-            fclose(in);
-            continue;
-        } 
-        
-        // 5. Decomprimi
-        if (decode(in, out) == 0) { // Assumo che decode() restituisca 0 in caso di successo
-            printf("Decompresso %s in %s\n", argv[i], final_out_path);
+        } else if (decode(r,w) == 0) {
+            printf("Deompressed %s in %s\n", argv[i], final_out_path);
         } else {
-            fprintf(stderr, "ERRORE: la decompressione di %s in %s è fallita\n", argv[i], final_out_path);
-        }
+            fprintf(stderr, "ERROR: decompression of %s into %s failed\n", argv[i], final_out_path);
+		}
 
-        fclose(in);
-        fclose(out);
+        free(final_out_path);
+        fclose(r);
+        fclose(w);
     }
 
     return 0;
